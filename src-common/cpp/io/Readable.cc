@@ -99,9 +99,9 @@ int Readable::readVUInt (uint64_t *value) {
 
         rd++;
         if (buffer & 128) {
-            result |= ((buffer & 0x7f) << shift);
+            result |= ((uint64_t)(buffer & 0x7f) << shift);
         } else {
-            result |= (buffer << shift);
+            result |= ((uint64_t)buffer << shift);
             break;
         }
     }
