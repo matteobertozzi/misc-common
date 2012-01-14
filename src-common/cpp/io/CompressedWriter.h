@@ -45,8 +45,7 @@ class CompressedWriter : public BufferedWriter {
         virtual unsigned int compress (const void *src, void *dst, unsigned int size) = 0;
 };
 
-int LZ4_compress   (char* source, char* dest, int isize);
-int LZ4_uncompress (char* source, char* dest, int osize);
+int LZ4_compress (char* source, char* dest, int isize);
 class Lz4Writer : public CompressedWriter {
     public:
         Lz4Writer(Writable *writable, unsigned int buf_size)
