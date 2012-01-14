@@ -19,6 +19,7 @@
 #include "DiskWriter.h"
 #include "DiskReader.h"
 
+#include <unistd.h>
 #include <stdio.h>
 
 int testWrite (const char *filename) {
@@ -57,11 +58,12 @@ int testRead (const char *filename) {
 }
 
 int main (int argc, char **argv) {
-    const char *filename = "test.disk";
+    const char *filename = "io-compressed.disk";
 
     testWrite(filename);
     testRead(filename);
 
+    unlink(filename);
     return(0);
 }
 
