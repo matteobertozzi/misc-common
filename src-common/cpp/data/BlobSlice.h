@@ -32,6 +32,7 @@ class BlobSlice : public ByteSlice {
         }
 
         size_t length (void) const { return(_length); }
+        const uint8_t *data (void) const { return(_blob); }
 
         uint8_t fetch8 (size_t index) const { return(_blob[index]); }
         uint16_t fetch16 (size_t index) const { return(((uint16_t *)_blob)[index]); }
