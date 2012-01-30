@@ -26,10 +26,12 @@
 #define __align_down(x, size)    (((x) / (size)) * (size))
 #define __ioblock_offset(x)      (IOFHEAD_SIZE + (((x) / IOBLOCK_USER_SIZE) * IOBLOCK_DISK_SIZE))
 
-typedef struct ioblock {
+typedef struct ioblock ioblock_t;
+
+struct ioblock {
     iohead_t head;
     uint8_t  body[IOBLOCK_BODY_SIZE];
-} ioblock_t;
+} __attribute__((__packed__));
 
 size_t ioread (int fd, void *buf, size_t size, off_t off) {
     unsigned char *pbuf = (unsigned char *)buf;
@@ -206,7 +208,6 @@ int ioblock_write (iocodec_t *codec,
     } else {
         avail = size;
     }
-
     memcpy(ublock.body + offset, buf, avail);
     if (__ioblock_store(codec, fd, doffset, &dblock, &ublock))
         return(0);
@@ -280,6 +281,7 @@ static int __ioblock_encode_aes (iocodec_data_t *data, void *dst, const void *sr
 }
 
 static int __ioblock_decode_aes (iocodec_data_t *data, void *dst, const void *src) {
+    memset(dst, 0, IOBLOCK_DISK_SIZE);
     return(crypto_aes_decrypt((crypto_aes_t *)data->ptr,
                               src, IOBLOCK_DISK_SIZE,
                               dst, NULL));

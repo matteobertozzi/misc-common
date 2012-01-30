@@ -66,7 +66,10 @@ def removeDirectoryContents(path):
 
 def _findCompiler():
     paths = os.getenv('PATH', '/usr/bin').split(':')
-    compilers = ['gcc']
+    if Build.platformIsMac():
+        compilers = ['clang', 'gcc']
+    else:
+        compilers = ['gcc', 'clang']
 
     for compiler in compilers:
         for path in paths:
@@ -576,8 +579,13 @@ if __name__ == '__main__':
     DEFAULT_CFLAGS = ['-Wall', '-Wmissing-field-initializers']
     DEFAULT_RELEASE_CFLAGS = ['-O2']
     DEFAULT_DEBUG_CFLAGS = ['-g']
-    DEFAULT_DEFINES = ['-D__USE_FILE_OFFSET64', '-D_FILE_OFFSET_BITS=64', '-DAES_OPENSSL', '-DHAVE_SETXATTR']
+    DEFAULT_DEFINES = ['-D__USE_FILE_OFFSET64', '-D_FILE_OFFSET_BITS=64']
     DEFAULT_LDLIBS = ['-lcrypto']
+
+    if Build.platformIsMac():
+        DEFAULT_DEFINES.extend(['-DCRYPTO_COMMON_CRYPTO'])
+    else:
+        DEFAULT_DEFINES.extend(['-DHAVE_SETXATTR', '-DCRYPTO_OPENSSL'])
 
     # Default Build Options
     default_opts = BuildOptions()
@@ -607,10 +615,14 @@ if __name__ == '__main__':
 
     with bench('[T] Build Time'):
         default_opts.addIncludePaths(['-I./src'])
-    
+
         build_opts = default_opts.clone()
-        build_opts.addIncludePaths(['-I/usr/include/fuse'])
-        build_opts.addLdLibs(['-lpthread', '-lfuse', '-lrt', '-ldl'])
+        if Build.platformIsMac():
+            build_opts.addIncludePaths(['-I/usr/local/include/osxfuse/fuse'])
+            build_opts.addLdLibs(['-lpthread', '-L/usr/local/lib/ -losxfuse', '-ldl'])
+        else:
+            build_opts.addIncludePaths(['-I/usr/include/fuse'])
+            build_opts.addLdLibs(['-lpthread', '-lfuse', '-lrt', '-ldl'])
         build = BuildApp('aesfs', ['tool-fuse', 'src'], options=build_opts)
         build.build()
 

@@ -40,7 +40,7 @@ static int __file_encrypt (iocodec_t *codec, const char *src, const char *dst) {
         return(1);
     }
 
-    if ((dfd = open(dst, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0) {
+    if ((dfd = open(dst, O_CREAT | O_TRUNC | O_RDWR, 0644)) < 0) {
         perror("open()");
         close(sfd);
         return(2);

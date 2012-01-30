@@ -17,27 +17,42 @@
 #ifndef _CRYPTO_H_
 #define _CRYPTO_H_
 
-#ifndef __AES_DERIVATION_ROUNDS
-    #define __AES_DERIVATION_ROUNDS     (5)
-#endif /* !__AES_DERIVATION_ROUNDS */
-
+typedef struct crypto_sha1 crypto_sha1_t;
 typedef struct crypto_aes crypto_aes_t;
 
+int             crypto_aes_key         (unsigned char ikey[32],
+                                        unsigned char iv[32],
+                                        const void *key,
+                                        unsigned int key_size,
+                                        const void *salt,
+                                        unsigned int salt_size);
 crypto_aes_t *  crypto_aes_open        (const void *key,
-                                        int key_size,
-                                        unsigned char salt[8]);
+                                        unsigned int key_size,
+                                        const void *salt,
+                                        unsigned int salt_size);
 void            crypto_aes_close       (crypto_aes_t *crypto);
 
 int             crypto_aes_encrypt     (crypto_aes_t *crypto,
                                         const void *src,
-                                        int src_size,
+                                        unsigned int src_size,
                                         void *dst,
-                                        int *dst_size);
+                                        unsigned int *dst_size);
 int             crypto_aes_decrypt     (crypto_aes_t *crypto,
                                         const void *src,
-                                        int src_size,
+                                        unsigned int src_size,
                                         void *dst,
-                                        int *dst_size);
+                                        unsigned int *dst_size);
+
+#define CRYPTO_SHA1_LENGTH              20
+
+crypto_sha1_t *crypto_sha1_open         (void);
+void           crypto_sha1_close        (crypto_sha1_t *sha1);
+void           crypto_sha1_reset        (crypto_sha1_t *sha1);
+void           crypto_sha1_update       (crypto_sha1_t *sha1,
+                                         const void *data,
+                                         unsigned int data_size);
+void           crypto_sha1_final        (crypto_sha1_t *sha1,
+                                         unsigned char digest[20]);
 
 #endif /* _CRYPTO_H_ */
 

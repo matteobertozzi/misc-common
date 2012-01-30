@@ -74,12 +74,8 @@ struct aesfs_file {
     int fd;
 };
 
-static struct aesfs_file *aesfs_file_open (const char *path, int flags) {
+static struct aesfs_file *aesfs_file_from_fd (int fd) {
     struct aesfs_file *file;
-    int fd;
-
-    if ((fd = open(path, flags)) < 0)
-        return(NULL);
 
     if (!(file = (struct aesfs_file *) malloc(sizeof(struct aesfs_file)))) {
         close(fd);
@@ -94,6 +90,27 @@ static struct aesfs_file *aesfs_file_open (const char *path, int flags) {
     }
 
     return(file);
+}
+
+static struct aesfs_file *aesfs_file_create (const char *path,
+                                             int flags,
+                                             mode_t mode)
+{
+    int fd;
+
+    if ((fd = open(path, flags, mode)) < 0)
+        return(NULL);
+
+    return(aesfs_file_from_fd(fd));
+}
+
+static struct aesfs_file *aesfs_file_open (const char *path, int flags) {
+    int fd;
+
+    if ((fd = open(path, flags)) < 0)
+        return(NULL);
+
+    return(aesfs_file_from_fd(fd));
 }
 
 static int aesfs_file_sync (struct aesfs_file *file) {
@@ -114,8 +131,8 @@ static void aesfs_file_close (struct aesfs_file *file) {
 
 static char *__file_name_encode (char *path, const char *part, size_t size) {
     const unsigned char *p;
+    unsigned int bufsize;
     char buffer[1024];
-    int bufsize;
 
     if (crypto_aes_encrypt(__aesfs.aes, part, size, buffer, &bufsize))
         return(NULL);
@@ -128,8 +145,8 @@ static char *__file_name_encode (char *path, const char *part, size_t size) {
 
 static char *__file_name_decode (char *path, const char *part, size_t size) {
     unsigned char buffer[1024];
+    unsigned int part_size;
     unsigned char *pbuf;
-    int part_size;
 
     /* Check if name is encoded */
     if ((size & 15) != 0) {
@@ -162,10 +179,8 @@ static int __file_path_transform (char *realpath,
     memcpy(realpath, __aesfs.root, __aesfs.root_length);
     while ((p = strchr(path, '/')) != NULL) {
         if ((psize = (p - path)) > 0) {
-            if ((rp = func(rp, path, psize)) == NULL) {
-                free(realpath);
+            if ((rp = func(rp, path, psize)) == NULL)
                 return(-1);
-            }
         }
 
         path = p + 1;
@@ -173,10 +188,8 @@ static int __file_path_transform (char *realpath,
     }
 
     if (*path != '\0') {
-        if ((rp = func(rp, path, strlen(path))) == NULL) {
-            free(realpath);
+        if ((rp = func(rp, path, strlen(path))) == NULL)
             return(-2);
-        }
     }
 
     *rp = '\0';
@@ -214,6 +227,23 @@ static int aesfs_file_name_decode (char *dst, const char *name) {
     return(0);
 }
 
+static int aesfs_file_stat (const char *path, struct stat *stbuf) {
+    int res;
+
+    if ((res = lstat(path, stbuf)) >= 0) {
+        int fd;
+
+        if ((fd = open(path, O_RDONLY)) > 0) {
+            struct iofhead fhead;
+            if (!iofhead_read(fd, &fhead))
+                stbuf->st_size = fhead.length;
+            close(fd);
+        }
+    }
+
+    return(res);
+}
+
 /* ============================================================================
  *  FUSE Helpers
  */
@@ -236,29 +266,7 @@ static int aesfs_file_name_decode (char *dst, const char *name) {
  *  FUSE operations
  */
 static int __getattr (const char *path, struct stat *stbuf) {
-    char *realpath;
-    int res;
-
-    if ((realpath = aesfs_file_path_encode(path)) == NULL)
-        return(-ENOMEM);
-
-    if ((res = lstat(realpath, stbuf)) >= 0) {
-        int fd;
-
-        if ((fd = open(realpath, O_RDONLY)) > 0) {
-            struct iofhead fhead;
-            if (!iofhead_read(fd, &fhead))
-                stbuf->st_size = fhead.length;
-            close(fd);
-        }
-    }
-
-    free(realpath);
-    return((res < 0) ? -errno : 0);
-}
-
-static int __access (const char *path, int mask) {
-    __fuse_sys_bypass(access, path, mask);
+    __fuse_sys_bypass(aesfs_file_stat, path, stbuf);
 }
 
 static int __readlink (const char *path, char *buf, size_t size) {
@@ -408,9 +416,33 @@ static int __utimens (const char *path, const struct timespec ts[2]) {
     __fuse_sys_bypass(utimes, path, tv);
 }
 
+static int __create (const char *path, mode_t mode, struct fuse_file_info *fi) {
+    struct aesfs_file *file;
+    char *realpath;
+
+    if ((realpath = aesfs_file_path_encode(path)) == NULL)
+        return(-ENOMEM);
+
+    fi->flags &= ~O_WRONLY;
+    fi->flags |= O_RDWR;
+
+    if ((file = aesfs_file_create(realpath, fi->flags, mode)) == NULL) {
+        free(realpath);
+        return(-errno);
+    }
+
+    fi->fh = (uint64_t)file;
+    free(realpath);
+    return(0);
+}
+
 static int __open (const char *path, struct fuse_file_info *fi) {
     struct aesfs_file *file;
     char *realpath;
+
+    fi->flags &= ~O_RDONLY;
+    fi->flags &= ~O_WRONLY;
+    fi->flags |= O_RDWR;
 
     if ((realpath = aesfs_file_path_encode(path)) == NULL)
         return(-ENOMEM);
@@ -507,7 +539,6 @@ static int __removexattr (const char *path, const char *name) {
  */
 static struct fuse_operations __aesfs_fuse = {
     .getattr    = __getattr,
-    .access     = __access,
     .readlink   = __readlink,
     .readdir    = __readdir,
     .mknod      = __mknod,
@@ -522,6 +553,7 @@ static struct fuse_operations __aesfs_fuse = {
     .truncate   = __truncate,
     .utimens    = __utimens,
     .open       = __open,
+    .create     = __create,
     .read       = __read,
     .write      = __write,
     .statfs     = __statfs,

@@ -21,10 +21,10 @@
 
 #define IOFHEAD_SIZE             (sizeof(struct iofhead))
 #define IOFHEAD_MAGIC            (0x71cc75bf)
-#define IOBLOCK_MAGIC            (0x7d95)
+#define IOBLOCK_MAGIC            (0x506787e)
 
 #define IOBLOCK_AES_SIZE         (16)
-#define IOBLOCK_DISK_SIZE        (512)
+#define IOBLOCK_DISK_SIZE        (4096)
 #define IOBLOCK_HEAD_SIZE        (sizeof(struct iohead))
 #define IOBLOCK_BODY_SIZE        (IOBLOCK_DISK_SIZE - IOBLOCK_HEAD_SIZE)
 #define IOBLOCK_USER_SIZE        (IOBLOCK_BODY_SIZE - IOBLOCK_AES_SIZE)
@@ -41,9 +41,10 @@ struct iofhead {
 } __attribute__((__packed__));
 
 struct iohead {
-    uint16_t magic;
-    uint16_t length;
+    uint32_t magic;
+    uint32_t length;
     uint32_t crc;
+    uint32_t pad;
 } __attribute__((__packed__));
 
 struct iocodec_plug {

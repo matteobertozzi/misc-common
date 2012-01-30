@@ -62,7 +62,6 @@ void iofreepass (char **lineptr, ssize_t n) {
 
 
 crypto_aes_t *crypto_aes_from_input (void) {
-    unsigned char usalt[8] = { 0x5f, 0x52, 0xe5, 0x6b, 0xe0, 0x9f, 0x83, 0x41 };
     crypto_aes_t *aes;
     ssize_t salt_len;
     ssize_t key_len;
@@ -79,8 +78,7 @@ crypto_aes_t *crypto_aes_from_input (void) {
     }
 
     /* Initialize AES */
-    memcpy(usalt, salt, (salt_len > 8) ? 8 : salt_len);
-    aes = crypto_aes_open(key, key_len, usalt);
+    aes = crypto_aes_open(key, key_len, salt, salt_len);
 
     /* Free Key & Salt */
     iofreepass(&key, key_len);
