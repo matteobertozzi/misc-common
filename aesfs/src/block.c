@@ -196,18 +196,25 @@ int ioblock_write (iocodec_t *codec,
     int wr;
 
     doffset = __ioblock_offset(offset);
-    if (__ioblock_fetch(codec, fd, doffset, &dblock, &ublock) < 0)
-        return(-1);
 
     offset = (offset - __align_down(offset, IOBLOCK_USER_SIZE));
     avail = offset + size;
-    if (avail > ublock.head.length) {
-        avail = ((avail > IOBLOCK_USER_SIZE) ? IOBLOCK_USER_SIZE : avail);
+    if (avail >= IOBLOCK_USER_SIZE && offset == 0) {
+        avail = IOBLOCK_USER_SIZE;
         ublock.head.length = avail;
-        avail = avail - offset;
     } else {
-        avail = size;
+        if (__ioblock_fetch(codec, fd, doffset, &dblock, &ublock) < 0)
+            return(-1);
+
+        if (avail > IOBLOCK_USER_SIZE)
+            avail = IOBLOCK_USER_SIZE;
+
+        if (avail > ublock.head.length)
+            ublock.head.length = avail;
+
+        avail = avail - offset;
     }
+
     memcpy(ublock.body + offset, buf, avail);
     if (__ioblock_store(codec, fd, doffset, &dblock, &ublock))
         return(0);
@@ -216,14 +223,17 @@ int ioblock_write (iocodec_t *codec,
     size -= avail;
     while (size > 0) {
         doffset += IOBLOCK_DISK_SIZE;
-        if (__ioblock_fetch(codec, fd, doffset, &dblock, &ublock) < 0)
-            break;
 
-        if (size > ublock.head.length) {
-            avail = (size > IOBLOCK_USER_SIZE) ? IOBLOCK_USER_SIZE : size;
+        if (size >= IOBLOCK_USER_SIZE) {
+            avail = IOBLOCK_USER_SIZE;
             ublock.head.length = avail;
         } else {
+            if (__ioblock_fetch(codec, fd, doffset, &dblock, &ublock) < 0)
+                break;
+
             avail = size;
+            if (size > ublock.head.length)
+                ublock.head.length = avail;
         }
 
         memcpy(ublock.body, buf + wr, avail);
