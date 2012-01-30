@@ -228,7 +228,7 @@ static void __test5 (void) {
     codec.vtable = &codec_aes;
     codec.data.ptr = &aes;
 
-    aes_open(&aes, "MyAesKey", 8, (unsigned char *)"abcdefgh");
+    aes_open(&aes, "MyAesKey", 8, "abcdefgh", 8);
     __test_rwencoded("test5.data", &codec);
     aes_close(&aes);
 }

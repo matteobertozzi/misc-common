@@ -1,34 +1,45 @@
-#include "aes.h"
+/*
+ *   Copyright 2012 Matteo Bertozzi
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
 
-#define __AES_DERIVATION_ROUNDS         (7)
+#if defined(AES_OPENSSL)
+
+#include "aes.h"
 
 int aes_open (aes_t *aes,
               const void *key,
-              int key_size,
-              const unsigned char salt[8])
+              unsigned int key_size,
+              const void *salt,
+              unsigned int salt_size)
 {
     unsigned char ikey[32];
     unsigned char iv[32];
-    int ivlen;
 
-    ivlen = EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(),
-                           salt, key, key_size,
-                           __AES_DERIVATION_ROUNDS,
-                           ikey, iv);
-    if (ivlen != 32)
-        return(-1);
+    aes_key(ikey, iv, key, key_size, salt, salt_size);
 
     EVP_CIPHER_CTX_init(&(aes->enc));
-    if (!EVP_EncryptInit_ex(&(aes->enc), EVP_aes_256_cbc(), NULL, key, iv)) {
+    if (!EVP_EncryptInit_ex(&(aes->enc), EVP_aes_256_cbc(), NULL, ikey, iv)) {
         EVP_CIPHER_CTX_cleanup(&(aes->enc));
-        return(-2);
+        return(-1);
     }
 
     EVP_CIPHER_CTX_init(&(aes->dec));
-    if (!EVP_DecryptInit_ex(&(aes->dec), EVP_aes_256_cbc(), NULL, key, iv)) {
+    if (!EVP_DecryptInit_ex(&(aes->dec), EVP_aes_256_cbc(), NULL, ikey, iv)) {
         EVP_CIPHER_CTX_cleanup(&(aes->enc));
         EVP_CIPHER_CTX_cleanup(&(aes->dec));
-        return(-3);
+        return(-2);
     }
 
     return(0);
@@ -80,4 +91,6 @@ int aes_decrypt (aes_t *aes,
 
     return(psize + fsize);
 }
+
+#endif /* AES_OPENSSL */
 

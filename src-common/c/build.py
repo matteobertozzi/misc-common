@@ -66,7 +66,10 @@ def removeDirectoryContents(path):
 
 def _findCompiler():
     paths = os.getenv('PATH', '/usr/bin').split(':')
-    compilers = ['gcc']
+    if Build.platformIsMac():
+        compilers = ['clang', 'gcc']
+    else:
+        compilers = ['gcc', 'clang']
 
     for compiler in compilers:
         for path in paths:
@@ -576,8 +579,13 @@ if __name__ == '__main__':
     DEFAULT_CFLAGS = ['-Wall', '-Wmissing-field-initializers']
     DEFAULT_RELEASE_CFLAGS = ['-O2']
     DEFAULT_DEBUG_CFLAGS = ['-g']
-    DEFAULT_DEFINES = ['-D__USE_FILE_OFFSET64', '-DAES_OPENSSL']
+    DEFAULT_DEFINES = ['-D__USE_FILE_OFFSET64']
     DEFAULT_LDLIBS = ['-lcrypto']
+
+    if Build.platformIsMac():
+        DEFAULT_DEFINES.extend(['-DAES_COMMON_CRYPTO', '-DSHA1_COMMON_CRYPTO'])
+    else:
+        DEFAULT_DEFINES.extend(['-DAES_OPENSSL', '-DSHA1_OPENSSL'])
 
     # Default Build Options
     default_opts = BuildOptions()
