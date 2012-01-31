@@ -109,7 +109,6 @@ static int __ioblock_fetch (iocodec_t *codec,
     if (rd != IOBLOCK_DISK_SIZE)
         return(-1);
 
-    memset(ublock, 0, sizeof(ioblock_t));
     if (__ioblock_decode(codec, ublock, dblock))
         return(-2);
 
@@ -291,7 +290,6 @@ static int __ioblock_encode_aes (iocodec_data_t *data, void *dst, const void *sr
 }
 
 static int __ioblock_decode_aes (iocodec_data_t *data, void *dst, const void *src) {
-    memset(dst, 0, IOBLOCK_DISK_SIZE);
     return(crypto_aes_decrypt((crypto_aes_t *)data->ptr,
                               src, IOBLOCK_DISK_SIZE,
                               dst, NULL));
