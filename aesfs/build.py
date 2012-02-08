@@ -579,7 +579,7 @@ if __name__ == '__main__':
     DEFAULT_CFLAGS = ['-Wall', '-Wmissing-field-initializers']
     DEFAULT_RELEASE_CFLAGS = ['-O2']
     DEFAULT_DEBUG_CFLAGS = ['-g']
-    DEFAULT_DEFINES = ['-D__USE_FILE_OFFSET64', '-D_FILE_OFFSET_BITS=64']
+    DEFAULT_DEFINES = ['-D__USE_FILE_OFFSET64', '-D_FILE_OFFSET_BITS=64', '-D_XOPEN_SOURCE=700']
     DEFAULT_LDLIBS = ['-lcrypto']
 
     if Build.platformIsMac():
