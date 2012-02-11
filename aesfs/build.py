@@ -580,12 +580,13 @@ if __name__ == '__main__':
     DEFAULT_RELEASE_CFLAGS = ['-O2']
     DEFAULT_DEBUG_CFLAGS = ['-g']
     DEFAULT_DEFINES = ['-D__USE_FILE_OFFSET64', '-D_FILE_OFFSET_BITS=64', '-D_XOPEN_SOURCE=700']
-    DEFAULT_LDLIBS = ['-lcrypto']
+    DEFAULT_LDLIBS = []
 
     if Build.platformIsMac():
         DEFAULT_DEFINES.extend(['-DCRYPTO_COMMON_CRYPTO'])
     else:
         DEFAULT_DEFINES.extend(['-DHAVE_SETXATTR', '-DCRYPTO_OPENSSL'])
+        DEFAULT_LDLIBS.extend(['-lcrypto'])
 
     # Default Build Options
     default_opts = BuildOptions()
