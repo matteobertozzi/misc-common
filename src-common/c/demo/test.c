@@ -20,12 +20,16 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#include "byteslice.h"
 #include "buffered.h"
 #include "encoded.h"
 #include "stream.h"
 #include "disk.h"
 #include "aes.h"
 
+/* ============================================================================
+ *  I/O Tests
+ */
 int __print_write (stream_t *stream, const void *buf, unsigned int n) {
     const char *pbuf = (const char *)buf;
     unsigned int i;
@@ -116,7 +120,7 @@ static void __test2 (void) {
     io_read(stream, buf, 11 + 8);
     buf[11 + 8] = 0;
     printf("BUF: %s\n", buf);
-    printf("FILE SIZE %lu\n", io_length(stream));
+    printf("FILE SIZE %llu\n", io_length(stream));
     disk_stream_close(&disk);
 }
 
@@ -233,7 +237,82 @@ static void __test5 (void) {
     aes_close(&aes);
 }
 
+/* ============================================================================
+ *  Data Tests
+ */
+static void __test6 (void) {
+    const char *data = "Hello World";
+    byte_slice_t slice;
+    char buffer[10];
+    int n;
+
+    printf("================================================\n");
+    printf("TEST 6 - Byte Slice\n");
+
+    byte_slice_open(&slice, data + 6, 5);
+    printf("Length: %u\n", slice_length(&slice));
+
+    n = slice_copy(&slice, buffer, 0, 5);
+    buffer[n] = 0;
+    printf("%d '%s'\n", n, buffer);
+
+    n = slice_copy(&slice, buffer, 0, 15);
+    buffer[n] = 0;
+    printf("%d '%s'\n", n, buffer);
+
+    n = slice_copy(&slice, buffer, 5, 5);
+    buffer[n] = 0;
+    printf("%d '%s'\n", n, buffer);
+
+    n = slice_copy(&slice, buffer, 3, 5);
+    buffer[n] = 0;
+    printf("%d '%s'\n", n, buffer);
+
+    n = slice_copy(&slice, buffer, 2, 2);
+    buffer[n] = 0;
+    printf("%d '%s'\n", n, buffer);
+
+    byte_slice_close(&slice);
+}
+
+static void __test7 (void) {
+    const char *data = "Hello World";
+    prefix_slice_t slice;
+    char buffer[16];
+    int n;
+
+    printf("================================================\n");
+    printf("TEST 7 - Prefix Slice\n");
+
+    prefix_slice_open(&slice, data, 5, data + 6, 5);
+    printf("Length: %u\n", slice_length(&slice));
+
+    n = slice_copy(&slice, buffer, 0, 5);
+    buffer[n] = 0;
+    printf("%d '%s'\n", n, buffer);
+
+    n = slice_copy(&slice, buffer, 0, 15);
+    buffer[n] = 0;
+    printf("%d '%s'\n", n, buffer);
+
+    n = slice_copy(&slice, buffer, 5, 5);
+    buffer[n] = 0;
+    printf("%d '%s'\n", n, buffer);
+
+    n = slice_copy(&slice, buffer, 3, 5);
+    buffer[n] = 0;
+    printf("%d '%s'\n", n, buffer);
+
+    n = slice_copy(&slice, buffer, 2, 2);
+    buffer[n] = 0;
+    printf("%d '%s'\n", n, buffer);
+
+    prefix_slice_close(&slice);
+}
+
+
 int main (int argc, char **argv) {
+    printf("I/O\n");
     printf("stream vtable:   %ld\n", sizeof(stream_vtable_t));
     printf("stream:          %ld\n", sizeof(stream_t));
     printf("disk_stream:     %ld\n", sizeof(disk_stream_t));
@@ -241,6 +320,11 @@ int main (int argc, char **argv) {
     printf("buffered_reader: %ld\n", sizeof(buffered_reader_t));
     printf("encoded_writer:  %ld\n", sizeof(encoded_writer_t));
     printf("encoded_reader:  %ld\n", sizeof(encoded_reader_t));
+    printf("DATA\n");
+    printf("slice vtable:    %ld\n", sizeof(slice_vtable_t));
+    printf("slice:           %ld\n", sizeof(slice_t));
+    printf("byte slice:      %ld\n", sizeof(byte_slice_t));
+    printf("prefix slice:    %ld\n", sizeof(prefix_slice_t));
 
     __test0();
     __test1();
@@ -248,6 +332,10 @@ int main (int argc, char **argv) {
     __test3();
     __test4();
     __test5();
+
+    __test6();
+    __test7();
+
     return(0);
 }
 

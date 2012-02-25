@@ -620,8 +620,8 @@ if __name__ == '__main__':
     with bench('[T] Build Time'):
         build_opts = default_lib_opts.clone()
         build_opts.addCFlags(['-Werror'])
-        build_opts.addIncludePaths(['-I./io'])
-        build = BuildLibrary('common', '0.1.0', ['io'], options=build_opts)
+        build_opts.addIncludePaths(['-I./io', '-I./data'])
+        build = BuildLibrary('common', '0.1.0', ['io', 'data'], options=build_opts)
         build.build()
 
         build_opts = default_opts.clone()
