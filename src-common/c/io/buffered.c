@@ -23,6 +23,26 @@
 /* ============================================================================
  *  Buffered Writer
  */
+static int __buffered_blocks_write (buffered_writer_t *writer,
+                                    const unsigned char *buffer,
+                                    unsigned int size)
+{
+    unsigned int blk_size = writer->size;
+    int n, wr;
+
+    n = 0;
+    while (size >= blk_size) {
+        if ((wr = io_write_fully(writer->stream, buffer, blk_size)) != blk_size)
+            return(-(n + wr));
+
+        buffer += blk_size;
+        size -= blk_size;
+        n += blk_size;
+    }
+
+    return(n);
+}
+
 static int __buffered_write (stream_t *stream,
                              const void *blob,
                              unsigned int size)
@@ -31,6 +51,14 @@ static int __buffered_write (stream_t *stream,
     const unsigned char *pblob = (const unsigned char *)blob;
     unsigned int avail = writer->size - writer->used;
     int n, wr;
+
+    if (!(writer->used)) {
+        if ((n = __buffered_blocks_write(writer, pblob, size)) < 0)
+            return(-n);
+
+        pblob += n;
+        size -= n;
+    }
 
     if (writer->blob == NULL) {
         if ((writer->blob = (unsigned char *) malloc(writer->size)) == NULL)
@@ -54,14 +82,11 @@ static int __buffered_write (stream_t *stream,
 
     /* Flush directly if input is greater than buffer */
     n = avail;
-    while (size >= writer->size) {
-        if ((wr = io_write_fully(writer->stream, pblob, writer->size)) != writer->size)
-            return(n + wr);
+    if ((wr = __buffered_blocks_write(writer, pblob, size)) < 0)
+        return(-wr);
 
-        pblob += writer->size;
-        size -= writer->size;
-        n += writer->size;
-    }
+    pblob += wr;
+    size -= wr;
 
     /* Store remaining in buffer */
     writer->used = size;

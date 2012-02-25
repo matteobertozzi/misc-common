@@ -39,12 +39,32 @@ static int __encoded_write_block (encoded_writer_t *buffer,
 
     if (io_write_vuint(buffer->stream, csize) <= 0)
         return(-2);
-        
+
     if (io_write_fully(buffer->stream, cbuf, csize) <= 0)
         return(-3);
 
     free(cbuf);
     return(size);
+}
+
+static int __encoded_write_blocks (encoded_writer_t *writer,
+                                   const unsigned char *buffer,
+                                   unsigned int size)
+{
+    unsigned int blk_size = writer->size;
+    int n, wr;
+
+    n = 0;
+    while (size >= writer->size) {
+        if ((wr = __encoded_write_block(writer, buffer, blk_size)) != blk_size)
+            return(-(n + wr));
+
+        buffer += blk_size;
+        size -= blk_size;
+        n += blk_size;
+    }
+
+    return(n);
 }
 
 static int __encoded_write (stream_t *stream,
@@ -55,6 +75,15 @@ static int __encoded_write (stream_t *stream,
     const unsigned char *pblob = (const unsigned char *)blob;
     unsigned int avail = writer->size - writer->used;
     int n, wr;
+
+    /* Flush directly if input is greater than buffer */
+    if (writer->used == 0) {
+        if ((n = __encoded_write_blocks(writer, pblob, size)) < 0)
+            return(-n);
+
+        pblob += n;
+        size -= n;
+    }
 
     if (writer->blob == NULL) {
         if ((writer->blob = (unsigned char *) malloc(writer->size)) == NULL)
@@ -78,14 +107,11 @@ static int __encoded_write (stream_t *stream,
 
     /* Flush directly if input is greater than buffer */
     n = avail;
-    while (size >= writer->size) {
-        if ((wr = __encoded_write_block(writer, pblob, writer->size)) != writer->size)
-            return(n + wr);
+    if ((wr = __encoded_write_blocks(writer, pblob, size)) < 0)
+        return(-wr);
 
-        pblob += writer->size;
-        size -= writer->size;
-        n += writer->size;
-    }
+    pblob += wr;
+    size -= wr;
 
     /* Store remaining in buffer */
     writer->used = size;
@@ -151,9 +177,9 @@ static int __encoded_read_block (encoded_reader_t *buffer) {
     unsigned char *cbuf;
     uint64_t csize;
     uint64_t size;
-    
+
     /* Read header */
-    if (io_read_vuint(buffer->stream, &size) <= 0) 
+    if (io_read_vuint(buffer->stream, &size) <= 0)
         return(-1);
 
     if (io_read_vuint(buffer->stream, &csize) <= 0)
