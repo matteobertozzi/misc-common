@@ -1,0 +1,7 @@
+Lightweight HTTP Proxy
+
+    ./http-proxy.py - by default runs on 8080
+    ./http-proxy.py 7521 - runs on specified port
+
+Change your browser settings, and you're done!
+
