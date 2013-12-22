@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>A31F6F32-6039-4662-8DC7-C919990FAED7</string>
+	<key>IDESourceControlProjectName</key>
+	<string>stah</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>33C398DC-4229-439E-BDDC-272BCFCA387B</key>
+		<string>https://github.com/matteobertozzi/misc-common.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>stah/stah.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>33C398DC-4229-439E-BDDC-272BCFCA387B</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/matteobertozzi/misc-common.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>33C398DC-4229-439E-BDDC-272BCFCA387B</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>33C398DC-4229-439E-BDDC-272BCFCA387B</string>
+			<key>IDESourceControlWCCName</key>
+			<string>misc-common</string>
+		</dict>
+	</array>
+</dict>
+</plist>
