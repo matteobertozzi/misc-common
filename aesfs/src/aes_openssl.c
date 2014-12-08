@@ -93,6 +93,8 @@ int crypto_aes_encrypt (crypto_aes_t *crypto,
     int psize = 0;
     int fsize = 0;
 
+    pthread_mutex_lock(&(crypto->lock));
+
     /* allows reusing of 'e' for multiple encryption cycles */
     if (!EVP_EncryptInit_ex(e, NULL, NULL, NULL, NULL)) {
         pthread_mutex_unlock(&(crypto->lock));
